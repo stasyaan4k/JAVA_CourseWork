@@ -33,7 +33,7 @@ public class StudentTableModel extends AbstractTableModel {
     }
 
     public List<Student> getStudents() {
-        return students;
+        return new ArrayList<>(students); // Возвращаем копию для безопасности
     }
 
     @Override

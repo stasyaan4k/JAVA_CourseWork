@@ -1,6 +1,10 @@
 package logic;
 
-public class Student {
+import java.io.Serializable;
+
+public class Student implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String fullName;
     private int score; // 0-10 баллов
     private boolean passed;
@@ -40,6 +44,4 @@ public class Student {
     public String getResultText() {
         return passed ? "Сдал" : "Не сдал";
     }
-
-
 }

@@ -1,9 +1,12 @@
 package logic;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExamRecord {
+public class ExamRecord implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String subject;
     private String date;
     private List<Student> students;
@@ -25,7 +28,7 @@ public class ExamRecord {
     }
 
     public List<Student> getStudents() {
-        return students;
+        return new ArrayList<>(students); // Возвращаем копию для безопасности
     }
 
     public int getTotalStudents() {
