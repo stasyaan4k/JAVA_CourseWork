@@ -6,28 +6,30 @@ import java.awt.*;
 import java.awt.event.*;
 
 /**
- * Диалоговое окно для добавления нового студента.
- * Позволяет ввести ФИО и оценку студента.
+ * Диалоговое окно для редактирования данных студента.
+ * Позволяет изменить ФИО и оценку существующего студента.
  *
  * @version 1.0
  * @author Маленков Станислав Владимирович
  */
-public class AddStudentDialog extends JDialog {
+public class EditStudentDialog extends JDialog {
     private JTextField fullNameField;      // Поле для ФИО
     private JComboBox<String> scoreCombo;  // Выбор оценки
     private JLabel resultLabel;            // Метка результата
-    private JButton okButton;              // Кнопка "Добавить"
-    private JButton cancelButton;          // Кнопка "Отмена"
+    private JButton saveButton;            // Кнопка "Сохранить"
+    private JButton cancelButton;          // Кнопка "Отменить"
     private boolean approved = false;      // Флаг подтверждения
-    private Student student;               // Объект студента
+    private Student student;               // Редактируемый студент
 
     /**
-     * Создает диалоговое окно для добавления студента.
+     * Создает диалоговое окно для редактирования студента.
      *
-     * @param parent - родительское окно
+     * @param parent        - родительское окно
+     * @param studentToEdit - студент для редактирования
      */
-    public AddStudentDialog(JFrame parent) {
-        super(parent, "Добавить студента", true);
+    public EditStudentDialog(JFrame parent, Student studentToEdit) {
+        super(parent, "Редактировать студента", true);
+        this.student = studentToEdit;
         initialize();
         setupLayout();
         setupListeners();
@@ -39,7 +41,9 @@ public class AddStudentDialog extends JDialog {
      * Инициализирует компоненты диалога.
      */
     private void initialize() {
-        fullNameField = new JTextField(25); // Поле для ФИО
+        // Поле для редактирования ФИО
+        fullNameField = new JTextField(25);
+        fullNameField.setText(student.getFullName());
 
         // Комбобокс с оценками (0-10 или "Не указана")
         scoreCombo = new JComboBox<>();
@@ -47,19 +51,26 @@ public class AddStudentDialog extends JDialog {
         for (int i = 0; i <= 10; i++) {
             scoreCombo.addItem(String.valueOf(i)); // Оценки 0-10
         }
-        scoreCombo.setSelectedIndex(0); // По умолчанию "Не указана"
+
+        // Устанавливаем текущую оценку студента
+        if (student.hasGrade()) {
+            scoreCombo.setSelectedItem(String.valueOf(student.getScore()));
+        } else {
+            scoreCombo.setSelectedIndex(0); // "Не указана"
+        }
 
         // Метка для отображения результата
-        resultLabel = new JLabel("Ожидает оценки");
+        resultLabel = new JLabel();
         resultLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        resultLabel.setForeground(Color.GRAY);
+        updateResultLabel(); // Обновляем результат
 
         // Кнопки управления
-        okButton = new JButton("Добавить");
-        cancelButton = new JButton("Отмена");
+        saveButton = new JButton("Сохранить");
+        cancelButton = new JButton("Отменить");
 
-        // Устанавливаем фокус на поле ФИО
+        // Устанавливаем фокус и выделяем весь текст
         fullNameField.requestFocusInWindow();
+        fullNameField.selectAll();
     }
 
     /**
@@ -99,7 +110,7 @@ public class AddStudentDialog extends JDialog {
 
         // Панель с кнопками
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(okButton);
+        buttonPanel.add(saveButton);
         buttonPanel.add(cancelButton);
 
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 3;
@@ -115,20 +126,20 @@ public class AddStudentDialog extends JDialog {
         // При изменении оценки обновляем результат
         scoreCombo.addActionListener(e -> updateResultLabel());
 
-        // Кнопка "Добавить"
-        okButton.addActionListener(e -> {
+        // Кнопка "Сохранить"
+        saveButton.addActionListener(e -> {
             if (validateInput()) {
                 approved = true;
-                createStudent();
+                updateStudent();
                 dispose(); // Закрываем окно
             }
         });
 
-        // Кнопка "Отмена"
+        // Кнопка "Отменить"
         cancelButton.addActionListener(e -> dispose());
 
-        // Enter в поле ФИО = нажатие кнопки "Добавить"
-        fullNameField.addActionListener(e -> okButton.doClick());
+        // Enter в поле ФИО = нажатие кнопки "Сохранить"
+        fullNameField.addActionListener(e -> saveButton.doClick());
     }
 
     /**
@@ -172,21 +183,24 @@ public class AddStudentDialog extends JDialog {
     }
 
     /**
-     * Создает объект студента на основе введенных данных.
+     * Обновляет данные студента на основе введенных значений.
      */
-    private void createStudent() {
+    private void updateStudent() {
         String fullName = fullNameField.getText().trim();
         String selectedScore = (String) scoreCombo.getSelectedItem();
 
         if ("Не указана".equals(selectedScore)) {
-            // Студент без оценки
-            student = new Student(fullName, -1);
+            // Устанавливаем студента без оценки
+            student.setFullName(fullName);
+            student.setScore(-1); // -1 означает "оценка не указана"
         } else {
             try {
                 int score = Integer.parseInt(selectedScore);
-                student = new Student(fullName, score);
+                student.setFullName(fullName);
+                student.setScore(score);
             } catch (NumberFormatException e) {
-                student = new Student(fullName, -1); // По умолчанию без оценки
+                student.setFullName(fullName);
+                student.setScore(-1); // По умолчанию без оценки
             }
         }
     }
@@ -194,14 +208,14 @@ public class AddStudentDialog extends JDialog {
     /**
      * Проверяет, было ли окно подтверждено.
      *
-     * @return true - если нажата "Добавить"
+     * @return true - если нажата "Сохранить"
      */
     public boolean isApproved() {
         return approved;
     }
 
     /**
-     * Возвращает созданного студента.
+     * Возвращает отредактированного студента.
      *
      * @return Student - объект студента
      */
@@ -210,13 +224,14 @@ public class AddStudentDialog extends JDialog {
     }
 
     /**
-     * Статический метод для отображения диалога.
+     * Статический метод для отображения диалога редактирования.
      *
-     * @param parent - родительское окно
-     * @return Student - созданный студент или null при отмене
+     * @param parent        - родительское окно
+     * @param studentToEdit - студент для редактирования
+     * @return Student - отредактированный студент или null при отмене
      */
-    public static Student showDialog(JFrame parent) {
-        AddStudentDialog dialog = new AddStudentDialog(parent);
+    public static Student showDialog(JFrame parent, Student studentToEdit) {
+        EditStudentDialog dialog = new EditStudentDialog(parent, studentToEdit);
         dialog.setVisible(true);
         return dialog.isApproved() ? dialog.getStudent() : null;
     }

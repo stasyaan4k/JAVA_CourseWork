@@ -2,15 +2,22 @@ package ui;
 
 import logic.*;
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
 
+/**
+ * Главное окно приложения для управления экзаменационной ведомостью.
+ * Реализует пользовательский интерфейс со всеми основными функциями:
+ * добавление студентов, редактирование данных, экспорт в Excel и т.д.
+ *
+ * @version 1.0
+ * @author Маленков Станислав Владимирович
+ */
 public class MainWindow {
+    // Основные компоненты интерфейса
     private JFrame frame;
     private JTable studentTable;
     private StudentTableModel tableModel;
@@ -19,29 +26,47 @@ public class MainWindow {
     private JTextField subjectField;
     private JTextField dateField;
     private JLabel statusLabel;
-    private File currentFile;
+    private File currentFile; // Текущий открытый файл
 
+    /**
+     * Конструктор главного окна.
+     * Инициализирует интерфейс и запускает приложение.
+     */
     public MainWindow() {
         initialize();
     }
 
+    /**
+     * Инициализация всех компонентов приложения.
+     */
     private void initialize() {
+        // Создаем объект для хранения данных
         examRecord = new ExamRecord("Программирование на Java", "15.12.2025");
         tableModel = new StudentTableModel();
 
+        // Создаем и настраиваем окно
         createMainWindow();
         setupUI();
 
+        // Показываем окно
         frame.setVisible(true);
     }
 
+    /**
+     * Создание основного окна приложения.
+     * Настраивает размер, положение и поведение при закрытии.
+     */
     private void createMainWindow() {
         frame = new JFrame("Ведомость для проведения аттестации");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 700);
-        frame.setLocationRelativeTo(null);
+        frame.setLocationRelativeTo(null); // Центрирование окна
     }
 
+    /**
+     * Настройка пользовательского интерфейса.
+     * Создает меню, панели ввода, таблицу и кнопки.
+     */
     private void setupUI() {
         // Создаем главное меню
         frame.setJMenuBar(createMenuBar());
@@ -51,7 +76,7 @@ public class MainWindow {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Добавляем все компоненты
+        // Добавляем все компоненты в правильном порядке
         mainPanel.add(createInputPanel());
         mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         mainPanel.add(createTablePanel());
@@ -63,19 +88,27 @@ public class MainWindow {
         frame.add(mainPanel);
     }
 
+    /**
+     * Создание строки меню приложения.
+     * Включает меню: Файл, Правка, Вид, Справка.
+     *
+     * @return JMenuBar - созданная строка меню
+     */
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // Меню Файл
+        /*
+         * МЕНЮ "ФАЙЛ"
+         * Содержит операции с файлами: открытие, сохранение, экспорт, печать
+         */
         JMenu fileMenu = new JMenu("Файл");
 
         // Пункт "Новая ведомость"
         JMenuItem newRecordItem = new JMenuItem("Новая ведомость");
-
         newRecordItem.addActionListener(e -> clearAllData());
         newRecordItem.setAccelerator(KeyStroke.getKeyStroke("ctrl N"));
 
-        // Пункты меню Файл
+        // Другие пункты меню Файл
         JMenuItem openItem = new JMenuItem("Открыть...");
         openItem.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
         openItem.addActionListener(e -> openFile());
@@ -101,13 +134,11 @@ public class MainWindow {
         // Подменю "Печать"
         JMenu printMenu = new JMenu("Печать");
         JMenuItem printItem = new JMenuItem("Печать ведомости...");
-
         printItem.addActionListener(e -> printRecord(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "print")));
         printItem.setAccelerator(KeyStroke.getKeyStroke("ctrl P"));
-
         printMenu.add(printItem);
 
-        // Выход
+        // Выход из приложения
         JMenuItem exitItem = new JMenuItem("Выход");
         exitItem.addActionListener(e -> System.exit(0));
         exitItem.setAccelerator(KeyStroke.getKeyStroke("alt F4"));
@@ -124,18 +155,23 @@ public class MainWindow {
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
 
-        // Меню Правка
+        /*
+         * МЕНЮ "ПРАВКА"
+         * Операции редактирования данных студентов
+         */
         JMenu editMenu = new JMenu("Правка");
         JMenuItem editStudentItem = new JMenuItem("Редактировать студента...");
         JMenuItem deleteStudentItem = new JMenuItem("Удалить студента");
         JMenuItem calculateItem = new JMenuItem("Рассчитать итоги");
         JMenuItem clearItem = new JMenuItem("Очистить всё");
 
+        // Назначение горячих клавиш
         editStudentItem.setAccelerator(KeyStroke.getKeyStroke("F2"));
         deleteStudentItem.setAccelerator(KeyStroke.getKeyStroke("DELETE"));
         calculateItem.setAccelerator(KeyStroke.getKeyStroke("F9"));
         clearItem.setAccelerator(KeyStroke.getKeyStroke("ctrl shift D"));
 
+        // Обработчики событий
         editStudentItem.addActionListener(e -> editStudent(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "edit")));
         deleteStudentItem.addActionListener(e -> removeStudent(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "remove")));
         calculateItem.addActionListener(e -> calculateResults(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "calc")));
@@ -147,13 +183,15 @@ public class MainWindow {
         editMenu.add(calculateItem);
         editMenu.add(clearItem);
 
-        // Меню Вид (упрощенное - только размер шрифта)
+        /*
+         * МЕНЮ "ВИД"
+         * Настройки отображения интерфейса
+         */
         JMenu viewMenu = new JMenu("Вид");
         JCheckBoxMenuItem showGridItem = new JCheckBoxMenuItem("Показывать сетку таблицы", true);
 
         // Подменю "Размер шрифта таблицы"
         JMenu fontSizeMenu = new JMenu("Размер шрифта таблицы");
-
         ButtonGroup fontSizeGroup = new ButtonGroup();
         JRadioButtonMenuItem fontSizeSmall = new JRadioButtonMenuItem("Мелкий (10pt)");
         JRadioButtonMenuItem fontSizeMedium = new JRadioButtonMenuItem("Средний (12pt)", true);
@@ -171,14 +209,17 @@ public class MainWindow {
         fontSizeMenu.add(fontSizeMedium);
         fontSizeMenu.add(fontSizeLarge);
 
-        // Обработчик для сетки
+        // Обработчик для отображения сетки
         showGridItem.addActionListener(e -> studentTable.setShowGrid(showGridItem.isSelected()));
 
         viewMenu.add(showGridItem);
         viewMenu.addSeparator();
         viewMenu.add(fontSizeMenu);
 
-        // Меню Справка
+        /*
+         * МЕНЮ "СПРАВКА"
+         * Информация о программе и авторе
+         */
         JMenu helpMenu = new JMenu("Справка");
         JMenuItem aboutAuthorItem = new JMenuItem("Сведения об авторе");
         JMenuItem aboutProgramItem = new JMenuItem("Сведения о программе");
@@ -194,6 +235,7 @@ public class MainWindow {
         helpMenu.addSeparator();
         helpMenu.add(helpItem);
 
+        // Собираем все меню в строку меню
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
         menuBar.add(viewMenu);
@@ -202,6 +244,11 @@ public class MainWindow {
         return menuBar;
     }
 
+    /**
+     * Создание панели для ввода параметров аттестации.
+     *
+     * @return JPanel - панель с полями ввода
+     */
     private JPanel createInputPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Параметры аттестации"));
@@ -217,7 +264,7 @@ public class MainWindow {
         dateField = new JTextField(" ");
         panel.add(dateField);
 
-        // Третья строка: Email
+        // Третья строка: Email для отправки
         panel.add(new JLabel("Email для отправки:"));
         emailField = new JTextField(" ");
         panel.add(emailField);
@@ -225,11 +272,17 @@ public class MainWindow {
         return panel;
     }
 
+    /**
+     * Создание панели с таблицей студентов.
+     *
+     * @return JPanel - панель с таблицей
+     */
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Список студентов"));
         panel.setPreferredSize(new Dimension(1100, 350));
 
+        // Создаем таблицу с моделью данных
         studentTable = new JTable(tableModel);
 
         // Настройка внешнего вида таблицы по умолчанию
@@ -239,12 +292,12 @@ public class MainWindow {
         studentTable.setGridColor(new Color(220, 220, 220));
 
         // Настраиваем ширину колонок
-        studentTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-        studentTable.getColumnModel().getColumn(1).setPreferredWidth(500);
-        studentTable.getColumnModel().getColumn(2).setPreferredWidth(80);
-        studentTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        studentTable.getColumnModel().getColumn(0).setPreferredWidth(40);   // №
+        studentTable.getColumnModel().getColumn(1).setPreferredWidth(500);  // ФИО
+        studentTable.getColumnModel().getColumn(2).setPreferredWidth(80);   // Оценка
+        studentTable.getColumnModel().getColumn(3).setPreferredWidth(100);  // Результат
 
-        studentTable.setAutoCreateRowSorter(true);
+        studentTable.setAutoCreateRowSorter(true); // Включаем сортировку
 
         // Добавляем обработчик двойного клика для редактирования
         studentTable.addMouseListener(new MouseAdapter() {
@@ -256,6 +309,7 @@ public class MainWindow {
             }
         });
 
+        // Помещаем таблицу в прокручиваемую панель
         JScrollPane tableScrollPane = new JScrollPane(studentTable);
         tableScrollPane.setPreferredSize(new Dimension(1100, 300));
         panel.add(tableScrollPane, BorderLayout.CENTER);
@@ -263,25 +317,31 @@ public class MainWindow {
         return panel;
     }
 
+    /**
+     * Создание панели с кнопками основных действий.
+     *
+     * @return JPanel - панель с кнопками
+     */
     private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
         panel.setBorder(BorderFactory.createTitledBorder("Основные действия"));
         panel.setMaximumSize(new Dimension(1150, 60));
 
-        // Оставляем только основные кнопки
+        // Создаем кнопки с соответствующими цветами
         JButton addBtn = createActionButton("Добавить студента", this::addStudent, new Color(70, 130, 180));
         JButton editBtn = createActionButton("Редактировать", this::editStudent, new Color(70, 130, 180));
         JButton removeBtn = createActionButton("Удалить", this::removeStudent, new Color(70, 130, 180));
         JButton calcBtn = createActionButton("Рассчитать итоги", this::calculateResults, new Color(70, 130, 180));
         JButton clearBtn = createActionButton("Очистить", this::clearData, new Color(70, 130, 180));
 
-        // Увеличиваем кнопки
+        // Увеличиваем размер кнопок для удобства
         addBtn.setPreferredSize(new Dimension(180, 35));
         editBtn.setPreferredSize(new Dimension(140, 35));
         removeBtn.setPreferredSize(new Dimension(140, 35));
         calcBtn.setPreferredSize(new Dimension(180, 35));
         clearBtn.setPreferredSize(new Dimension(140, 35));
 
+        // Добавляем кнопки на панель
         panel.add(addBtn);
         panel.add(editBtn);
         panel.add(removeBtn);
@@ -291,6 +351,14 @@ public class MainWindow {
         return panel;
     }
 
+    /**
+     * Создание стилизованной кнопки.
+     *
+     * @param text     - текст на кнопке
+     * @param listener - обработчик события
+     * @param color    - цвет фона кнопки
+     * @return JButton - созданная кнопка
+     */
     private JButton createActionButton(String text, java.awt.event.ActionListener listener, Color color) {
         JButton button = new JButton(text);
         button.addActionListener(listener);
@@ -301,16 +369,22 @@ public class MainWindow {
         return button;
     }
 
+    /**
+     * Создание строки состояния в нижней части окна.
+     *
+     * @return JPanel - панель статусной строки
+     */
     private JPanel createStatusBar() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setMaximumSize(new Dimension(1150, 30));
 
+        // Основная метка статуса
         statusLabel = new JLabel(" Готов к работе. Нажмите 'Добавить студента' для начала работы.");
         statusLabel.setBorder(BorderFactory.createLoweredBevelBorder());
         statusLabel.setBackground(new Color(240, 240, 240));
         statusLabel.setOpaque(true);
 
-        // Добавляем индикатор количества студентов
+        // Индикатор количества студентов
         JLabel counterLabel = new JLabel(" Студентов: 0 ");
         counterLabel.setBorder(BorderFactory.createLoweredBevelBorder());
         counterLabel.setBackground(new Color(220, 220, 220));
@@ -322,14 +396,26 @@ public class MainWindow {
         return panel;
     }
 
-    // Методы для работы с внешним видом таблицы
+    /*
+     * МЕТОДЫ ДЛЯ РАБОТЫ С ВНЕШНИМ ВИДОМ ТАБЛИЦЫ
+     */
+
+    /**
+     * Изменение размера шрифта в таблице.
+     *
+     * @param size - новый размер шрифта в пунктах
+     */
     private void setTableFontSize(int size) {
         Font currentFont = studentTable.getFont();
         studentTable.setFont(new Font(currentFont.getName(), currentFont.getStyle(), size));
-        studentTable.setRowHeight(size + 10);
+        studentTable.setRowHeight(size + 10); // Высота строки пропорциональна шрифту
         studentTable.repaint();
     }
 
+    /**
+     * Отображение окна справки.
+     * Содержит краткую информацию о функциях программы и горячих клавишах.
+     */
     private void showHelp() {
         String helpText = "КРАТКАЯ СПРАВКА\n\n" +
                 "1. ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ СТУДЕНТОВ\n" +
@@ -374,12 +460,19 @@ public class MainWindow {
         JOptionPane.showMessageDialog(frame, scrollPane, "Справка по программе", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Методы для работы с файлами XLSX
+    /*
+     * МЕТОДЫ ДЛЯ РАБОТЫ С ФАЙЛАМИ XLSX
+     */
+
+    /**
+     * Открытие диалога выбора файла для загрузки.
+     */
     private void openFile() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
             @Override
             public boolean accept(File f) {
+                // Разрешаем только файлы Excel и папки
                 return f.isDirectory() ||
                         f.getName().toLowerCase().endsWith(".xlsx") ||
                         f.getName().toLowerCase().endsWith(".xls");
@@ -398,7 +491,11 @@ public class MainWindow {
         }
     }
 
-    // Изменяем метод loadFromExcelFile:
+    /**
+     * Загрузка данных из файла Excel.
+     *
+     * @param file - файл Excel для загрузки
+     */
     private void loadFromExcelFile(File file) {
         try {
             ExcelImportResult result = ExcelExportService.importFromExcel(file.getAbsolutePath());
@@ -442,6 +539,10 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Сохранение данных в текущий файл.
+     * Если файл не выбран, открывается диалог "Сохранить как".
+     */
     private void saveFile() {
         if (currentFile == null) {
             saveFileAs();
@@ -450,6 +551,9 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Открытие диалога "Сохранить как" для выбора места сохранения файла.
+     */
     private void saveFileAs() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
@@ -466,7 +570,7 @@ public class MainWindow {
             }
         });
 
-        // Предлагаем имя файла по умолчанию
+        // Предлагаем имя файла по умолчанию на основе названия предмета
         String defaultName = ExcelExportService.generateFileName(examRecord.getSubject());
         fileChooser.setSelectedFile(new File(defaultName));
 
@@ -481,7 +585,11 @@ public class MainWindow {
         }
     }
 
-    // Изменяем метод saveToExcelFile:
+    /**
+     * Сохранение данных в файл Excel.
+     *
+     * @param file - файл для сохранения
+     */
     private void saveToExcelFile(File file) {
         updateExamRecordFromTable();
         boolean success = ExcelExportService.exportToExcel(examRecord, emailField.getText(), file.getAbsolutePath());
@@ -494,9 +602,15 @@ public class MainWindow {
         }
     }
 
+    /*
+     * МЕТОДЫ-ОБРАБОТЧИКИ СОБЫТИЙ
+     */
 
-
-    // Методы-обработчики
+    /**
+     * Добавление нового студента через диалоговое окно.
+     *
+     * @param e - событие ActionEvent
+     */
     private void addStudent(ActionEvent e) {
         Student student = AddStudentDialog.showDialog(frame);
         if (student != null) {
@@ -506,6 +620,11 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Редактирование выбранного студента.
+     *
+     * @param e - событие ActionEvent
+     */
     private void editStudent(ActionEvent e) {
         int selectedRow = studentTable.getSelectedRow();
         if (selectedRow >= 0) {
@@ -529,6 +648,11 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Удаление выбранного студента с подтверждением.
+     *
+     * @param e - событие ActionEvent
+     */
     private void removeStudent(ActionEvent e) {
         int selectedRow = studentTable.getSelectedRow();
         if (selectedRow >= 0) {
@@ -550,6 +674,12 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Расчет итогов аттестации.
+     * Отображает статистику по студентам.
+     *
+     * @param e - событие ActionEvent
+     */
     private void calculateResults(ActionEvent e) {
         updateExamRecordFromTable();
         String results = GradeCalculator.calculateResults(examRecord);
@@ -557,6 +687,11 @@ public class MainWindow {
         updateStatus("Рассчитаны итоги аттестации");
     }
 
+    /**
+     * Отправка результатов по email.
+     *
+     * @param e - событие ActionEvent
+     */
     private void sendEmail(ActionEvent e) {
         updateExamRecordFromTable();
         String email = emailField.getText().trim();
@@ -574,6 +709,11 @@ public class MainWindow {
         updateStatus("Результаты отправлены на email: " + email);
     }
 
+    /**
+     * Формирование ведомости для печати.
+     *
+     * @param e - событие ActionEvent
+     */
     private void printRecord(ActionEvent e) {
         updateExamRecordFromTable();
         if (examRecord.getTotalStudents() == 0) {
@@ -585,11 +725,22 @@ public class MainWindow {
         updateStatus("Сформирована ведомость для печати");
     }
 
+    /**
+     * Экспорт данных в формат Excel.
+     * Фактически вызывает сохранение файла.
+     *
+     * @param e - событие ActionEvent
+     */
     private void exportToExcel(ActionEvent e) {
         // Просто вызываем сохранение как
         saveFileAs();
     }
 
+    /**
+     * Очистка таблицы студентов.
+     *
+     * @param e - событие ActionEvent
+     */
     private void clearData(ActionEvent e) {
         if (tableModel.getRowCount() == 0) {
             showInfoDialog("Таблица уже пуста");
@@ -607,6 +758,10 @@ public class MainWindow {
         }
     }
 
+    /**
+     * Очистка всех данных (таблицы и параметров).
+     * Сбрасывает приложение в исходное состояние.
+     */
     private void clearAllData() {
         int result = JOptionPane.showConfirmDialog(frame,
                 "Очистить все данные (таблицу и параметры)? Это действие нельзя отменить.",
@@ -623,10 +778,18 @@ public class MainWindow {
         }
     }
 
+    /*
+     * ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+     */
+
+    /**
+     * Обновление объекта ExamRecord на основе данных из таблицы.
+     */
     private void updateExamRecordFromTable() {
         examRecord.setSubject(subjectField.getText());
         examRecord.setDate(dateField.getText());
 
+        // Создаем новый объект с актуальными данными
         ExamRecord newRecord = new ExamRecord(subjectField.getText(), dateField.getText());
         for (Student student : tableModel.getStudents()) {
             newRecord.addStudent(student);
@@ -647,7 +810,11 @@ public class MainWindow {
         }
     }
 
-    // В методе updateStatus добавляем информацию о студентах без оценки:
+    /**
+     * Обновление строки состояния.
+     *
+     * @param message - сообщение для отображения
+     */
     private void updateStatus(String message) {
         statusLabel.setText(" " + message + " | Студентов: " + tableModel.getRowCount() +
                 " | С оценкой: " + examRecord.getStudentsWithGrade() +
@@ -656,18 +823,39 @@ public class MainWindow {
                 " | Не сдали: " + examRecord.getFailedCount());
     }
 
+    /**
+     * Показ диалога с ошибкой.
+     *
+     * @param message - текст ошибки
+     */
     private void showErrorDialog(String message) {
         JOptionPane.showMessageDialog(frame, message, "Ошибка", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * Показ диалога с предупреждением.
+     *
+     * @param message - текст предупреждения
+     */
     private void showWarningDialog(String message) {
         JOptionPane.showMessageDialog(frame, message, "Предупреждение", JOptionPane.WARNING_MESSAGE);
     }
 
+    /**
+     * Показ информационного диалога.
+     *
+     * @param message - информационное сообщение
+     */
     private void showInfoDialog(String message) {
         JOptionPane.showMessageDialog(frame, message, "Информация", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    /**
+     * Точка входа в приложение.
+     * Запускает главное окно в потоке обработки событий Swing.
+     *
+     * @param args - аргументы командной строки
+     */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new MainWindow();

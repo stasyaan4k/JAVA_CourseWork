@@ -3,30 +3,81 @@ package ui;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Диалоговое окно "Сведения о программе".
+ * Содержит информацию о назначении, возможностях и требованиях программы.
+ *
+ * @version 1.0
+ * @author Маленков Станислав Владимирович
+ */
 public class AboutProgramWindow extends JDialog {
 
+    /**
+     * Создает окно с информацией о программе.
+     *
+     * @param parent - родительское окно
+     */
     public AboutProgramWindow(JFrame parent) {
         super(parent, "Сведения о программе", true);
         initialize();
         pack();
-        setLocationRelativeTo(parent);
+        setLocationRelativeTo(parent); // Центрирование
     }
 
+    /**
+     * Инициализирует компоненты окна.
+     */
     private void initialize() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Заголовок
+        // Заголовок окна
+        JLabel titleLabel = createTitleLabel();
+
+        // Изображение (заглушка)
+        JLabel imageLabel = createImageLabel();
+
+        // Описание программы
+        JScrollPane descriptionScroll = createDescriptionArea();
+
+        // Системные требования
+        JPanel requirementsPanel = createRequirementsPanel();
+
+        // Кнопка закрытия
+        JButton closeButton = new JButton("Закрыть");
+        closeButton.addActionListener(e -> dispose());
+
+        // Собираем интерфейс
+        assembleInterface(mainPanel, titleLabel, imageLabel,
+                descriptionScroll, requirementsPanel, closeButton);
+
+        add(mainPanel);
+    }
+
+    /**
+     * Создает заголовок окна.
+     */
+    private JLabel createTitleLabel() {
         JLabel titleLabel = new JLabel("Программа 'Экзаменационная ведомость'", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setForeground(new Color(0, 102, 204));
+        return titleLabel;
+    }
 
-        // Изображение по теме (заглушка)
+    /**
+     * Создает метку с изображением программы.
+     */
+    private JLabel createImageLabel() {
         JLabel imageLabel = new JLabel(new ImageIcon("program_image.jpg"));
         imageLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        return imageLabel;
+    }
 
-        // Описание программы
+    /**
+     * Создает текстовое поле с описанием программы.
+     */
+    private JScrollPane createDescriptionArea() {
         JTextArea descriptionArea = new JTextArea();
         descriptionArea.setText("НАЗНАЧЕНИЕ ПРОГРАММЫ\n\n" +
                 "Программа 'Экзаменационная ведомость' предназначена для автоматизации процесса " +
@@ -56,7 +107,13 @@ public class AboutProgramWindow extends JDialog {
         JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
         descriptionScroll.setPreferredSize(new Dimension(500, 300));
 
-        // Системные требования
+        return descriptionScroll;
+    }
+
+    /**
+     * Создает панель с системными требованиями.
+     */
+    private JPanel createRequirementsPanel() {
         JPanel requirementsPanel = new JPanel(new GridLayout(0, 1, 5, 5));
         requirementsPanel.setBorder(BorderFactory.createTitledBorder("Системные требования"));
         requirementsPanel.add(new JLabel("• Операционная система: Windows 7/8/10/11, Linux, macOS"));
@@ -65,11 +122,15 @@ public class AboutProgramWindow extends JDialog {
         requirementsPanel.add(new JLabel("• Свободное место на диске: 50 МБ"));
         requirementsPanel.add(new JLabel("• Java Runtime Environment 1.8 или выше"));
 
-        // Кнопка закрытия
-        JButton closeButton = new JButton("Закрыть");
-        closeButton.addActionListener(e -> dispose());
+        return requirementsPanel;
+    }
 
-        // Собираем интерфейс
+    /**
+     * Собирает все компоненты в интерфейс.
+     */
+    private void assembleInterface(JPanel mainPanel, JLabel titleLabel,
+                                   JLabel imageLabel, JScrollPane descriptionScroll,
+                                   JPanel requirementsPanel, JButton closeButton) {
         JPanel topPanel = new JPanel();
         topPanel.add(titleLabel);
 
@@ -84,10 +145,13 @@ public class AboutProgramWindow extends JDialog {
         mainPanel.add(topPanel, BorderLayout.NORTH);
         mainPanel.add(centerPanel, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        add(mainPanel);
     }
 
+    /**
+     * Отображает диалоговое окно.
+     *
+     * @param parent - родительское окно
+     */
     public static void showDialog(JFrame parent) {
         AboutProgramWindow dialog = new AboutProgramWindow(parent);
         dialog.setVisible(true);

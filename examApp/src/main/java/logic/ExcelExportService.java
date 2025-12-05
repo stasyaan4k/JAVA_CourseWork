@@ -12,30 +12,37 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Сервис для экспорта и импорта данных в формате Excel.
+ * Использует библиотеку Apache POI для работы с файлами .xlsx и .xls.
+ *
+ * @version 1.0
+ * @author Маленков Станислав Владимирович
+ */
 public class ExcelExportService {
 
+    /**
+     * Экспортирует данные ведомости в файл Excel.
+     *
+     * @param record   - данные экзамена
+     * @param email    - email для отправки
+     * @param filePath - путь для сохранения
+     * @return boolean - true если успешно
+     */
     public static boolean exportToExcel(ExamRecord record, String email, String filePath) {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Ведомость зачета");
 
-            // Создаем строки с метаданными
+            // Создаем метаданные
             createMetadataRows(sheet, record, email);
+            sheet.createRow(3); // Пустая строка
 
-            // Пустая строка для разделения
-            sheet.createRow(3);
-
-            // Создаем заголовок таблицы
+            // Создаем таблицу
             createHeaderRow(workbook, sheet, 4);
-
-            // Заполняем данные студентов
             fillStudentData(sheet, record, 5);
-
-            // Создаем строки с итогами
             createSummaryRows(sheet, record);
 
-            // Автоматически подгоняем ширину колонок
             autoSizeColumns(sheet);
-
             return saveWorkbook(workbook, filePath);
 
         } catch (IOException e) {
@@ -44,41 +51,38 @@ public class ExcelExportService {
         }
     }
 
+    /**
+     * Создает строки с метаданными (предмет, дата, email).
+     */
     private static void createMetadataRows(Sheet sheet, ExamRecord record, String email) {
         CellStyle labelStyle = createLabelStyle(sheet.getWorkbook());
         CellStyle valueStyle = createValueStyle(sheet.getWorkbook());
 
         // Строка 0: Предмет
         Row subjectRow = sheet.createRow(0);
-        Cell subjectLabel = subjectRow.createCell(0);
-        subjectLabel.setCellValue("Предмет:");
-        subjectLabel.setCellStyle(labelStyle);
+        subjectRow.createCell(0).setCellValue("Предмет:");
+        subjectRow.createCell(1).setCellValue(record.getSubject());
+        subjectRow.getCell(0).setCellStyle(labelStyle);
+        subjectRow.getCell(1).setCellStyle(valueStyle);
 
-        Cell subjectValue = subjectRow.createCell(1);
-        subjectValue.setCellValue(record.getSubject());
-        subjectValue.setCellStyle(valueStyle);
-
-        // Строка 1: Дата аттестации
+        // Строка 1: Дата
         Row dateRow = sheet.createRow(1);
-        Cell dateLabel = dateRow.createCell(0);
-        dateLabel.setCellValue("Дата аттестации:");
-        dateLabel.setCellStyle(labelStyle);
-
-        Cell dateValue = dateRow.createCell(1);
-        dateValue.setCellValue(record.getDate());
-        dateValue.setCellStyle(valueStyle);
+        dateRow.createCell(0).setCellValue("Дата аттестации:");
+        dateRow.createCell(1).setCellValue(record.getDate());
+        dateRow.getCell(0).setCellStyle(labelStyle);
+        dateRow.getCell(1).setCellStyle(valueStyle);
 
         // Строка 2: Email
         Row emailRow = sheet.createRow(2);
-        Cell emailLabel = emailRow.createCell(0);
-        emailLabel.setCellValue("Email для отправки:");
-        emailLabel.setCellStyle(labelStyle);
-
-        Cell emailValue = emailRow.createCell(1);
-        emailValue.setCellValue(email);
-        emailValue.setCellStyle(valueStyle);
+        emailRow.createCell(0).setCellValue("Email для отправки:");
+        emailRow.createCell(1).setCellValue(email);
+        emailRow.getCell(0).setCellStyle(labelStyle);
+        emailRow.getCell(1).setCellStyle(valueStyle);
     }
 
+    /**
+     * Создает стиль для меток (жирный шрифт).
+     */
     private static CellStyle createLabelStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -87,6 +91,9 @@ public class ExcelExportService {
         return style;
     }
 
+    /**
+     * Создает стиль для значений (желтый фон).
+     */
     private static CellStyle createValueStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
@@ -94,6 +101,9 @@ public class ExcelExportService {
         return style;
     }
 
+    /**
+     * Создает заголовок таблицы.
+     */
     private static void createHeaderRow(Workbook workbook, Sheet sheet, int rowNum) {
         CellStyle headerStyle = createHeaderStyle(workbook);
         Row headerRow = sheet.createRow(rowNum);
@@ -106,6 +116,9 @@ public class ExcelExportService {
         }
     }
 
+    /**
+     * Создает стиль для заголовка таблицы.
+     */
     private static CellStyle createHeaderStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -123,6 +136,9 @@ public class ExcelExportService {
         return style;
     }
 
+    /**
+     * Заполняет данные студентов в таблицу.
+     */
     private static void fillStudentData(Sheet sheet, ExamRecord record, int startRow) {
         int rowNum = startRow;
         for (Student student : record.getStudents()) {
@@ -143,29 +159,26 @@ public class ExcelExportService {
         }
     }
 
+    /**
+     * Создает строки с итоговой статистикой.
+     */
     private static void createSummaryRows(Sheet sheet, ExamRecord record) {
         int lastRow = sheet.getLastRowNum();
+        CellStyle summaryStyle = createSummaryStyle(sheet.getWorkbook());
 
-        Row summaryRow1 = sheet.createRow(lastRow + 2);
-        summaryRow1.createCell(0).setCellValue("ИТОГИ:");
-        summaryRow1.getCell(0).setCellStyle(createSummaryStyle(sheet.getWorkbook()));
+        sheet.createRow(lastRow + 2).createCell(0).setCellValue("ИТОГИ:");
+        sheet.getRow(lastRow + 2).getCell(0).setCellStyle(summaryStyle);
 
-        Row summaryRow2 = sheet.createRow(lastRow + 3);
-        summaryRow2.createCell(0).setCellValue("Всего студентов: " + record.getTotalStudents());
-
-        Row summaryRow3 = sheet.createRow(lastRow + 4);
-        summaryRow3.createCell(0).setCellValue("С оценкой: " + record.getStudentsWithGrade());
-
-        Row summaryRow4 = sheet.createRow(lastRow + 5);
-        summaryRow4.createCell(0).setCellValue("Без оценки: " + record.getStudentsWithoutGrade());
-
-        Row summaryRow5 = sheet.createRow(lastRow + 6);
-        summaryRow5.createCell(0).setCellValue("Сдали: " + record.getPassedCount());
-
-        Row summaryRow6 = sheet.createRow(lastRow + 7);
-        summaryRow6.createCell(0).setCellValue("Не сдали: " + record.getFailedCount());
+        sheet.createRow(lastRow + 3).createCell(0).setCellValue("Всего студентов: " + record.getTotalStudents());
+        sheet.createRow(lastRow + 4).createCell(0).setCellValue("С оценкой: " + record.getStudentsWithGrade());
+        sheet.createRow(lastRow + 5).createCell(0).setCellValue("Без оценки: " + record.getStudentsWithoutGrade());
+        sheet.createRow(lastRow + 6).createCell(0).setCellValue("Сдали: " + record.getPassedCount());
+        sheet.createRow(lastRow + 7).createCell(0).setCellValue("Не сдали: " + record.getFailedCount());
     }
 
+    /**
+     * Создает стиль для итоговой строки.
+     */
     private static CellStyle createSummaryStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
@@ -175,12 +188,18 @@ public class ExcelExportService {
         return style;
     }
 
+    /**
+     * Автоматически подгоняет ширину колонок.
+     */
     private static void autoSizeColumns(Sheet sheet) {
         for (int i = 0; i < 4; i++) {
             sheet.autoSizeColumn(i);
         }
     }
 
+    /**
+     * Сохраняет книгу Excel в файл.
+     */
     private static boolean saveWorkbook(Workbook workbook, String filePath) throws IOException {
         try (java.io.FileOutputStream fileOut = new java.io.FileOutputStream(filePath)) {
             workbook.write(fileOut);
@@ -188,6 +207,12 @@ public class ExcelExportService {
         }
     }
 
+    /**
+     * Импортирует данные из файла Excel.
+     *
+     * @param filePath - путь к файлу Excel
+     * @return ExcelImportResult - результат импорта
+     */
     public static ExcelImportResult importFromExcel(String filePath) {
         ExcelImportResult result = new ExcelImportResult();
         List<Student> students = new ArrayList<>();
@@ -205,50 +230,14 @@ public class ExcelExportService {
                 return result;
             }
 
-            Sheet sheet = workbook.getSheetAt(0); // Берем первый лист
+            Sheet sheet = workbook.getSheetAt(0); // Первый лист
 
             // Читаем метаданные
-            String subject = "";
-            String date = "";
-            String email = "";
-
-            // Ищем строки с метаданными по содержимому
-            for (int i = 0; i <= Math.min(10, sheet.getLastRowNum()); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                Cell firstCell = row.getCell(0);
-                if (firstCell == null) continue;
-
-                String cellValue = getCellValueAsString(firstCell).toLowerCase();
-
-                if (cellValue.contains("предмет:")) {
-                    Cell valueCell = row.getCell(1);
-                    if (valueCell != null) {
-                        subject = getCellValueAsString(valueCell);
-                    }
-                } else if (cellValue.contains("дата") && cellValue.contains("аттестации:")) {
-                    Cell valueCell = row.getCell(1);
-                    if (valueCell != null) {
-                        date = getCellValueAsString(valueCell);
-                    }
-                } else if (cellValue.contains("email") || cellValue.contains("почта")) {
-                    Cell valueCell = row.getCell(1);
-                    if (valueCell != null) {
-                        email = getCellValueAsString(valueCell);
-                    }
-                }
-            }
-
-            result.setSubject(subject);
-            result.setDate(date);
-            result.setEmail(email);
+            readMetadata(sheet, result);
 
             // Ищем начало таблицы студентов
             int tableStartRow = findTableStart(sheet);
-
             if (tableStartRow == -1) {
-                // Если не нашли заголовок таблицы, ищем данные по структуре
                 tableStartRow = findDataStart(sheet);
             }
 
@@ -258,12 +247,10 @@ public class ExcelExportService {
                     Row row = sheet.getRow(i);
                     if (row == null) continue;
 
-                    // Пропускаем пустые строки и строки с итогами
                     if (isSummaryRow(row) || isEmptyRow(row)) {
-                        continue;
+                        continue; // Пропускаем итоги и пустые строки
                     }
 
-                    // Пытаемся прочитать студента
                     Student student = readStudentFromRow(row);
                     if (student != null) {
                         students.add(student);
@@ -282,22 +269,52 @@ public class ExcelExportService {
         return result;
     }
 
-    private static int findTableStart(Sheet sheet) {
-        // Ищем заголовок таблицы
-        for (int i = 0; i <= Math.min(20, sheet.getLastRowNum()); i++) {
+    /**
+     * Читает метаданные из файла Excel.
+     */
+    private static void readMetadata(Sheet sheet, ExcelImportResult result) {
+        String subject = "", date = "", email = "";
+
+        for (int i = 0; i <= Math.min(10, sheet.getLastRowNum()); i++) {
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
-            // Проверяем, является ли строка заголовком таблицы
-            if (isTableHeader(row)) {
-                return i + 1; // Следующая строка после заголовка
+            Cell firstCell = row.getCell(0);
+            if (firstCell == null) continue;
+
+            String cellValue = getCellValueAsString(firstCell).toLowerCase();
+
+            if (cellValue.contains("предмет:")) {
+                subject = getCellValueAsString(row.getCell(1));
+            } else if (cellValue.contains("дата") && cellValue.contains("аттестации:")) {
+                date = getCellValueAsString(row.getCell(1));
+            } else if (cellValue.contains("email") || cellValue.contains("почта")) {
+                email = getCellValueAsString(row.getCell(1));
+            }
+        }
+
+        result.setSubject(subject);
+        result.setDate(date);
+        result.setEmail(email);
+    }
+
+    /**
+     * Находит начало таблицы студентов по заголовку.
+     */
+    private static int findTableStart(Sheet sheet) {
+        for (int i = 0; i <= Math.min(20, sheet.getLastRowNum()); i++) {
+            Row row = sheet.getRow(i);
+            if (row != null && isTableHeader(row)) {
+                return i + 1; // Строка после заголовка
             }
         }
         return -1;
     }
 
+    /**
+     * Проверяет, является ли строка заголовком таблицы.
+     */
     private static boolean isTableHeader(Row row) {
-        // Проверяем, содержит ли строка заголовки таблицы
         String[] expectedHeaders = {"№", "фио", "оценка", "результат"};
         int matchCount = 0;
 
@@ -314,22 +331,21 @@ public class ExcelExportService {
             }
         }
 
-        return matchCount >= 2; // Если найдено хотя бы 2 совпадения
+        return matchCount >= 2; // Хотя бы 2 совпадения
     }
 
+    /**
+     * Находит начало данных по содержимому.
+     */
     private static int findDataStart(Sheet sheet) {
-        // Если не нашли заголовок, ищем начало данных
         for (int i = 0; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
-            // Ищем строку, где есть ФИО (обычно во второй колонке)
             Cell nameCell = row.getCell(1); // Колонка B
             if (nameCell != null) {
                 String name = getCellValueAsString(nameCell).trim();
-                // Проверяем, что это похоже на ФИО (не пустое, не номер, не заголовок)
-                if (!name.isEmpty() &&
-                        !name.matches("\\d+") &&
+                if (!name.isEmpty() && !name.matches("\\d+") &&
                         !name.toLowerCase().contains("фио") &&
                         !name.toLowerCase().contains("итог") &&
                         name.length() > 2) {
@@ -340,21 +356,24 @@ public class ExcelExportService {
         return -1;
     }
 
+    /**
+     * Проверяет, является ли строка итоговой.
+     */
     private static boolean isSummaryRow(Row row) {
         if (row == null) return false;
 
-        // Проверяем первую ячейку на наличие итоговой информации
         Cell firstCell = row.getCell(0);
         if (firstCell != null) {
             String value = getCellValueAsString(firstCell).toLowerCase();
-            return value.contains("итог") ||
-                    value.contains("всего") ||
-                    value.contains("сдали") ||
-                    value.contains("не сдали");
+            return value.contains("итог") || value.contains("всего") ||
+                    value.contains("сдали") || value.contains("не сдали");
         }
         return false;
     }
 
+    /**
+     * Проверяет, является ли строка пустой.
+     */
     private static boolean isEmptyRow(Row row) {
         if (row == null) return true;
 
@@ -370,32 +389,25 @@ public class ExcelExportService {
         return true;
     }
 
+    /**
+     * Читает данные студента из строки Excel.
+     */
     private static Student readStudentFromRow(Row row) {
-        // Ожидаемая структура:
-        // Колонка 0: № (может быть пустой)
-        // Колонка 1: ФИО
-        // Колонка 2: Оценка (может быть пустой)
-        // Колонка 3: Результат (может быть пустой)
-
-        Cell nameCell = row.getCell(1); // ФИО
+        Cell nameCell = row.getCell(1); // ФИО в колонке B
         if (nameCell == null) {
-            // Пробуем другие колонки
-            nameCell = row.getCell(0);
+            nameCell = row.getCell(0); // Пробуем колонку A
             if (nameCell == null) return null;
         }
 
         String fullName = getCellValueAsString(nameCell).trim();
-        if (fullName.isEmpty() ||
-                fullName.matches("\\d+") || // Не номер
-                fullName.toLowerCase().contains("фио") || // Не заголовок
-                fullName.toLowerCase().contains("итог")) { // Не итоги
+        if (fullName.isEmpty() || fullName.matches("\\d+") ||
+                fullName.toLowerCase().contains("фио") ||
+                fullName.toLowerCase().contains("итог")) {
             return null;
         }
 
-        // Ищем оценку
+        // Ищем оценку в колонках 2-3
         int score = -1;
-
-        // Пробуем разные колонки для оценки
         for (int i = 2; i <= 3; i++) {
             Cell scoreCell = row.getCell(i);
             if (scoreCell != null) {
@@ -405,11 +417,9 @@ public class ExcelExportService {
                         score = Integer.parseInt(scoreText);
                         if (score >= 0 && score <= 10) {
                             break; // Нашли валидную оценку
-                        } else {
-                            score = -1; // Невалидная оценка
                         }
                     } catch (NumberFormatException e) {
-                        // Не число, пробуем следующую колонку
+                        // Пропускаем, пробуем следующую колонку
                     }
                 }
             }
@@ -417,6 +427,9 @@ public class ExcelExportService {
         return new Student(fullName, score);
     }
 
+    /**
+     * Преобразует значение ячейки в строку.
+     */
     private static String getCellValueAsString(Cell cell) {
         if (cell == null) return "";
 
@@ -427,7 +440,6 @@ public class ExcelExportService {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     return cell.getDateCellValue().toString();
                 } else {
-                    // Проверяем, целое ли число
                     double value = cell.getNumericCellValue();
                     if (value == Math.floor(value)) {
                         return String.valueOf((int) value);
@@ -448,15 +460,22 @@ public class ExcelExportService {
         }
     }
 
+    /**
+     * Показывает диалог с ошибкой.
+     */
     private static void showErrorDialog(String message) {
         JOptionPane.showMessageDialog(null, message, "Ошибка", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * Генерирует имя файла на основе предмета и времени.
+     *
+     * @param subject - название предмета
+     * @return String - имя файла
+     */
     public static String generateFileName(String subject) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
         String cleanSubject = subject.replaceAll("[^a-zA-Z0-9а-яА-Я]", "_");
         return "ведомость_" + cleanSubject + "_" + timestamp + ".xlsx";
     }
-
-
 }
