@@ -5,9 +5,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
 import java.util.List;
 
 public class MainWindow {
@@ -107,9 +107,6 @@ public class MainWindow {
 
         printMenu.add(printItem);
 
-        // Разделитель
-        JSeparator separator = new JSeparator();
-
         // Выход
         JMenuItem exitItem = new JMenuItem("Выход");
         exitItem.addActionListener(e -> System.exit(0));
@@ -129,18 +126,22 @@ public class MainWindow {
 
         // Меню Правка
         JMenu editMenu = new JMenu("Правка");
+        JMenuItem editStudentItem = new JMenuItem("Редактировать студента...");
         JMenuItem deleteStudentItem = new JMenuItem("Удалить студента");
         JMenuItem calculateItem = new JMenuItem("Рассчитать итоги");
         JMenuItem clearItem = new JMenuItem("Очистить всё");
 
+        editStudentItem.setAccelerator(KeyStroke.getKeyStroke("F2"));
         deleteStudentItem.setAccelerator(KeyStroke.getKeyStroke("DELETE"));
         calculateItem.setAccelerator(KeyStroke.getKeyStroke("F9"));
         clearItem.setAccelerator(KeyStroke.getKeyStroke("ctrl shift D"));
 
+        editStudentItem.addActionListener(e -> editStudent(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "edit")));
         deleteStudentItem.addActionListener(e -> removeStudent(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "remove")));
         calculateItem.addActionListener(e -> calculateResults(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "calc")));
         clearItem.addActionListener(e -> clearData(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "clear")));
 
+        editMenu.add(editStudentItem);
         editMenu.add(deleteStudentItem);
         editMenu.addSeparator();
         editMenu.add(calculateItem);
@@ -208,17 +209,17 @@ public class MainWindow {
 
         // Первая строка: Предмет
         panel.add(new JLabel("Предмет:"));
-        subjectField = new JTextField("Программирование на Java");
+        subjectField = new JTextField(" ");
         panel.add(subjectField);
 
         // Вторая строка: Дата аттестации
         panel.add(new JLabel("Дата аттестации:"));
-        dateField = new JTextField("15.12.2025");
+        dateField = new JTextField(" ");
         panel.add(dateField);
 
         // Третья строка: Email
         panel.add(new JLabel("Email для отправки:"));
-        emailField = new JTextField("teacher@bntu.by");
+        emailField = new JTextField(" ");
         panel.add(emailField);
 
         return panel;
@@ -245,6 +246,16 @@ public class MainWindow {
 
         studentTable.setAutoCreateRowSorter(true);
 
+        // Добавляем обработчик двойного клика для редактирования
+        studentTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) { // Двойной клик
+                    editStudent(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "doubleclick"));
+                }
+            }
+        });
+
         JScrollPane tableScrollPane = new JScrollPane(studentTable);
         tableScrollPane.setPreferredSize(new Dimension(1100, 300));
         panel.add(tableScrollPane, BorderLayout.CENTER);
@@ -259,17 +270,20 @@ public class MainWindow {
 
         // Оставляем только основные кнопки
         JButton addBtn = createActionButton("Добавить студента", this::addStudent, new Color(70, 130, 180));
-        JButton removeBtn = createActionButton("Удалить", this::removeStudent, new Color(220, 80, 60));
-        JButton calcBtn = createActionButton("Рассчитать итоги", this::calculateResults, new Color(60, 179, 113));
-        JButton clearBtn = createActionButton("Очистить", this::clearData, new Color(178, 34, 34));
+        JButton editBtn = createActionButton("Редактировать", this::editStudent, new Color(70, 130, 180));
+        JButton removeBtn = createActionButton("Удалить", this::removeStudent, new Color(70, 130, 180));
+        JButton calcBtn = createActionButton("Рассчитать итоги", this::calculateResults, new Color(70, 130, 180));
+        JButton clearBtn = createActionButton("Очистить", this::clearData, new Color(70, 130, 180));
 
         // Увеличиваем кнопки
         addBtn.setPreferredSize(new Dimension(180, 35));
+        editBtn.setPreferredSize(new Dimension(140, 35));
         removeBtn.setPreferredSize(new Dimension(140, 35));
         calcBtn.setPreferredSize(new Dimension(180, 35));
         clearBtn.setPreferredSize(new Dimension(140, 35));
 
         panel.add(addBtn);
+        panel.add(editBtn);
         panel.add(removeBtn);
         panel.add(calcBtn);
         panel.add(clearBtn);
@@ -318,29 +332,32 @@ public class MainWindow {
 
     private void showHelp() {
         String helpText = "КРАТКАЯ СПРАВКА\n\n" +
-                "1. ДОБАВЛЕНИЕ СТУДЕНТОВ\n" +
-                "   • Нажмите кнопку 'Добавить студента'\n" +
-                "   • Введите ФИО и оценку (0-10)\n" +
-                "   • Критерии: 0-3 - не сдал, 4-10 - сдал\n\n" +
+                "1. ДОБАВЛЕНИЕ И РЕДАКТИРОВАНИЕ СТУДЕНТОВ\n" +
+                "   • Нажмите кнопку 'Добавить студента' или 'Редактировать'\n" +
+                "   • Введите ФИО и оценку (0-10, может быть не указана)\n" +
+                "   • Критерии: 0-3 - не сдал, 4-10 - сдал\n" +
+                "   • Для быстрого редактирования: двойной клик по строке или F2\n\n" +
                 "2. РАБОТА С ТАБЛИЦЕЙ\n" +
-                "   • Для удаления выделите строку и нажмите 'Удалить'\n" +
+                "   • Для удаления выделите строку и нажмите 'Удалить' или Delete\n" +
+                "   • Для редактирования: выделите строку и нажмите F2 или двойной клик\n" +
                 "   • Для сортировки нажмите на заголовок столбца\n\n" +
                 "3. РАСЧЕТ ИТОГОВ\n" +
-                "   • Нажмите 'Рассчитать итоги' для получения статистики\n" +
+                "   • Нажмите 'Рассчитать итоги' или F9 для получения статистики\n" +
                 "   • Отображается общее количество, процент сдачи\n\n" +
                 "4. ФАЙЛОВЫЕ ОПЕРАЦИИ\n" +
-                "   • Файл → Открыть... (Ctrl+O): загрузить ведомость из файла\n" +
-                "   • Файл → Сохранить (Ctrl+S): сохранить текущую ведомость\n" +
+                "   • Файл → Открыть... (Ctrl+O): загрузить ведомость из файла XLSX\n" +
+                "   • Файл → Сохранить (Ctrl+S): сохранить текущую ведомость в XLSX\n" +
                 "   • Файл → Сохранить как...: сохранить под новым именем\n" +
-                "   • Файл → Экспорт → В Excel: сохранить в Excel\n" +
+                "   • Файл → Экспорт → В Excel...: дублирует функцию сохранения\n" +
                 "   • Файл → Экспорт → Отправить по email: отправить результаты\n\n" +
                 "5. ПЕЧАТЬ\n" +
                 "   • Файл → Печать → Печать ведомости (Ctrl+P)\n" +
                 "   • Формирует печатную форму ведомости\n\n" +
                 "ГОРЯЧИЕ КЛАВИШИ:\n" +
-                "• Ctrl+O - Открыть файл\n" +
-                "• Ctrl+S - Сохранить файл\n" +
+                "• Ctrl+O - Открыть файл XLSX\n" +
+                "• Ctrl+S - Сохранить файл XLSX\n" +
                 "• Ctrl+N - Новая ведомость\n" +
+                "• F2 - Редактировать студента\n" +
                 "• Delete - Удалить студента\n" +
                 "• F9 - Рассчитать итоги\n" +
                 "• Ctrl+P - Печать\n" +
@@ -357,53 +374,71 @@ public class MainWindow {
         JOptionPane.showMessageDialog(frame, scrollPane, "Справка по программе", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Методы для работы с файлами
+    // Методы для работы с файлами XLSX
     private void openFile() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
             @Override
             public boolean accept(File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith(".exam");
+                return f.isDirectory() ||
+                        f.getName().toLowerCase().endsWith(".xlsx") ||
+                        f.getName().toLowerCase().endsWith(".xls");
             }
 
             @Override
             public String getDescription() {
-                return "Файлы ведомостей (*.exam)";
+                return "Файлы Excel (*.xlsx, *.xls)";
             }
         });
 
         int result = fileChooser.showOpenDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            loadFromFile(file);
+            loadFromExcelFile(file);
         }
     }
 
-    private void loadFromFile(File file) {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            // Читаем данные из файла
-            String subject = (String) ois.readObject();
-            String date = (String) ois.readObject();
-            String email = (String) ois.readObject();
-            List<Student> students = (List<Student>) ois.readObject();
+    // Изменяем метод loadFromExcelFile:
+    private void loadFromExcelFile(File file) {
+        try {
+            ExcelImportResult result = ExcelExportService.importFromExcel(file.getAbsolutePath());
 
-            // Обновляем интерфейс
-            subjectField.setText(subject);
-            dateField.setText(date);
-            emailField.setText(email);
+            if (result.hasData()) {
+                // Обновляем интерфейс с загруженными данными
+                String subject = result.getSubject();
+                String date = result.getDate();
+                String email = result.getEmail();
 
-            // Очищаем таблицу и добавляем студентов
-            tableModel.clear();
-            for (Student student : students) {
-                tableModel.addStudent(student);
+                // Устанавливаем значения по умолчанию, если данные отсутствуют
+                if (subject == null || subject.trim().isEmpty()) {
+                    subject = "Шаблон (можно использовать для любого предмета)";
+                }
+                if (date == null || date.trim().isEmpty()) {
+                    date = "05.12.2025";
+                }
+                if (email == null || email.trim().isEmpty()) {
+                    email = "teacher.bntu@gmail.com";
+                }
+
+                subjectField.setText(subject);
+                dateField.setText(date);
+                emailField.setText(email);
+
+                // Очищаем таблицу и добавляем студентов
+                tableModel.clear();
+                for (Student student : result.getStudents()) {
+                    tableModel.addStudent(student);
+                }
+
+                currentFile = file;
+                updateExamRecordFromTable();
+                updateStatus("Файл Excel загружен: " + file.getName());
+            } else {
+                showWarningDialog("Не удалось загрузить данные из файла Excel");
             }
 
-            currentFile = file;
-            updateExamRecordFromTable();
-            updateStatus("Файл загружен: " + file.getName());
-
         } catch (Exception e) {
-            showErrorDialog("Ошибка при загрузке файла: " + e.getMessage());
+            showErrorDialog("Ошибка при загрузке файла Excel: " + e.getMessage());
         }
     }
 
@@ -411,7 +446,7 @@ public class MainWindow {
         if (currentFile == null) {
             saveFileAs();
         } else {
-            saveToFile(currentFile);
+            saveToExcelFile(currentFile);
         }
     }
 
@@ -420,47 +455,46 @@ public class MainWindow {
         fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
             @Override
             public boolean accept(File f) {
-                return f.isDirectory() || f.getName().toLowerCase().endsWith(".exam");
+                return f.isDirectory() ||
+                        f.getName().toLowerCase().endsWith(".xlsx") ||
+                        f.getName().toLowerCase().endsWith(".xls");
             }
 
             @Override
             public String getDescription() {
-                return "Файлы ведомостей (*.exam)";
+                return "Файлы Excel (*.xlsx, *.xls)";
             }
         });
 
         // Предлагаем имя файла по умолчанию
-        String defaultName = "ведомость_" + subjectField.getText().replaceAll("[^a-zA-Zа-яА-Я0-9]", "_") + ".exam";
+        String defaultName = ExcelExportService.generateFileName(examRecord.getSubject());
         fileChooser.setSelectedFile(new File(defaultName));
 
         int result = fileChooser.showSaveDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             // Добавляем расширение, если его нет
-            if (!file.getName().toLowerCase().endsWith(".exam")) {
-                file = new File(file.getAbsolutePath() + ".exam");
+            if (!file.getName().toLowerCase().endsWith(".xlsx") && !file.getName().toLowerCase().endsWith(".xls")) {
+                file = new File(file.getAbsolutePath() + ".xlsx");
             }
-            saveToFile(file);
+            saveToExcelFile(file);
         }
     }
 
-    private void saveToFile(File file) {
-        try (java.io.ObjectOutputStream oos = new java.io.ObjectOutputStream(new java.io.FileOutputStream(file))) {
-            updateExamRecordFromTable();
+    // Изменяем метод saveToExcelFile:
+    private void saveToExcelFile(File file) {
+        updateExamRecordFromTable();
+        boolean success = ExcelExportService.exportToExcel(examRecord, emailField.getText(), file.getAbsolutePath());
 
-            // Сохраняем данные
-            oos.writeObject(examRecord.getSubject());
-            oos.writeObject(examRecord.getDate());
-            oos.writeObject(emailField.getText());
-            oos.writeObject(tableModel.getStudents());
-
+        if (success) {
             currentFile = file;
-            updateStatus("Файл сохранен: " + file.getName());
-
-        } catch (Exception e) {
-            showErrorDialog("Ошибка при сохранении файла: " + e.getMessage());
+            updateStatus("Файл сохранен в Excel: " + file.getName());
+        } else {
+            showErrorDialog("Не удалось сохранить файл в формате Excel");
         }
     }
+
+
 
     // Методы-обработчики
     private void addStudent(ActionEvent e) {
@@ -469,6 +503,29 @@ public class MainWindow {
             tableModel.addStudent(student);
             updateExamRecordFromTable();
             updateStatus("Добавлен студент: " + student.getFullName() + " (оценка: " + student.getScore() + ")");
+        }
+    }
+
+    private void editStudent(ActionEvent e) {
+        int selectedRow = studentTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            int modelRow = studentTable.convertRowIndexToModel(selectedRow);
+            Student student = tableModel.getStudent(modelRow);
+            if (student != null) {
+                // Создаем копию студента для редактирования
+                Student studentCopy = new Student(student.getFullName(), student.getScore());
+
+                // Открываем диалог редактирования с текущими данными студента
+                Student editedStudent = EditStudentDialog.showDialog(frame, studentCopy);
+                if (editedStudent != null) {
+                    // Обновляем студента в модели
+                    tableModel.updateStudent(modelRow, editedStudent);
+                    updateExamRecordFromTable();
+                    updateStatus("Данные студента обновлены: " + editedStudent.getFullName());
+                }
+            }
+        } else {
+            showWarningDialog("Выберите студента для редактирования");
         }
     }
 
@@ -524,30 +581,13 @@ public class MainWindow {
             return;
         }
 
-        PrintTemplate.printRecord(examRecord);
+        PrintTemplate.printRecord(examRecord, emailField.getText());
         updateStatus("Сформирована ведомость для печати");
     }
 
     private void exportToExcel(ActionEvent e) {
-        updateExamRecordFromTable();
-        if (examRecord.getTotalStudents() == 0) {
-            showWarningDialog("Нет данных для экспорта");
-            return;
-        }
-
-        JFileChooser fileChooser = new JFileChooser();
-        String fileName = ExcelExportService.generateFileName(examRecord.getSubject());
-        fileChooser.setSelectedFile(new File(fileName));
-
-        int result = fileChooser.showSaveDialog(frame);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            boolean success = ExcelExportService.exportToExcel(examRecord, file.getAbsolutePath());
-
-            if (success) {
-                updateStatus("Ведомость сохранена в Excel: " + file.getName());
-            }
-        }
+        // Просто вызываем сохранение как
+        saveFileAs();
     }
 
     private void clearData(ActionEvent e) {
@@ -574,9 +614,9 @@ public class MainWindow {
 
         if (result == JOptionPane.YES_OPTION) {
             tableModel.clear();
-            subjectField.setText("");
-            dateField.setText("");
-            emailField.setText("");
+            subjectField.setText("Программирование на Java");
+            dateField.setText("15.12.2025");
+            emailField.setText("teacher@bntu.by");
             currentFile = null;
             updateExamRecordFromTable();
             updateStatus("Все данные очищены");
@@ -607,8 +647,11 @@ public class MainWindow {
         }
     }
 
+    // В методе updateStatus добавляем информацию о студентах без оценки:
     private void updateStatus(String message) {
         statusLabel.setText(" " + message + " | Студентов: " + tableModel.getRowCount() +
+                " | С оценкой: " + examRecord.getStudentsWithGrade() +
+                " | Без оценки: " + examRecord.getStudentsWithoutGrade() +
                 " | Сдали: " + examRecord.getPassedCount() +
                 " | Не сдали: " + examRecord.getFailedCount());
     }

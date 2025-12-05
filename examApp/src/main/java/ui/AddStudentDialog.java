@@ -7,7 +7,7 @@ import java.awt.event.*;
 
 public class AddStudentDialog extends JDialog {
     private JTextField fullNameField;
-    private JComboBox<Integer> scoreCombo;
+    private JComboBox<String> scoreCombo;
     private JLabel resultLabel;
     private JButton okButton;
     private JButton cancelButton;
@@ -26,16 +26,17 @@ public class AddStudentDialog extends JDialog {
     private void initialize() {
         fullNameField = new JTextField(25);
 
-        // Оценки от 0 до 10
+        // 10-балльная система оценок + возможность не указывать оценку
         scoreCombo = new JComboBox<>();
+        scoreCombo.addItem("Не указана"); // Первый элемент - без оценки
         for (int i = 0; i <= 10; i++) {
-            scoreCombo.addItem(i);
+            scoreCombo.addItem(String.valueOf(i));
         }
-        scoreCombo.setSelectedItem(4); // По умолчанию 4
+        scoreCombo.setSelectedIndex(0); // По умолчанию "Не указана"
 
-        resultLabel = new JLabel("Сдал");
+        resultLabel = new JLabel("Ожидает оценки");
         resultLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        updateResultLabel();
+        resultLabel.setForeground(Color.GRAY);
 
         okButton = new JButton("Добавить");
         cancelButton = new JButton("Отмена");
@@ -57,7 +58,7 @@ public class AddStudentDialog extends JDialog {
         gbc.gridx = 1; gbc.gridwidth = 2;
         mainPanel.add(fullNameField, gbc);
 
-        // Оценка
+        // Оценка (необязательная)
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
         mainPanel.add(new JLabel("Оценка (0-10):"), gbc);
         gbc.gridx = 1; gbc.gridwidth = 2;
@@ -71,7 +72,7 @@ public class AddStudentDialog extends JDialog {
 
         // Правила
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 3;
-        JLabel rulesLabel = new JLabel("<html><small>Критерии: 0-3 - не сдал, 4-10 - сдал</small></html>");
+        JLabel rulesLabel = new JLabel("<html><small>Критерии: 0-3 - не сдал, 4-10 - сдал. Оценка может быть не указана.</small></html>");
         rulesLabel.setForeground(Color.GRAY);
         mainPanel.add(rulesLabel, gbc);
 
@@ -107,13 +108,25 @@ public class AddStudentDialog extends JDialog {
     }
 
     private void updateResultLabel() {
-        int score = (Integer) scoreCombo.getSelectedItem();
-        if (score >= 4) {
-            resultLabel.setText("Сдал");
-            resultLabel.setForeground(Color.GREEN.darker());
+        String selected = (String) scoreCombo.getSelectedItem();
+
+        if ("Не указана".equals(selected)) {
+            resultLabel.setText("Ожидает оценки");
+            resultLabel.setForeground(Color.GRAY);
         } else {
-            resultLabel.setText("Не сдал");
-            resultLabel.setForeground(Color.RED);
+            try {
+                int score = Integer.parseInt(selected);
+                if (score >= 4) {
+                    resultLabel.setText("Сдал");
+                    resultLabel.setForeground(Color.GREEN.darker());
+                } else {
+                    resultLabel.setText("Не сдал");
+                    resultLabel.setForeground(Color.RED);
+                }
+            } catch (NumberFormatException e) {
+                resultLabel.setText("Ошибка оценки");
+                resultLabel.setForeground(Color.ORANGE);
+            }
         }
     }
 
@@ -130,9 +143,19 @@ public class AddStudentDialog extends JDialog {
 
     private void createStudent() {
         String fullName = fullNameField.getText().trim();
-        int score = (Integer) scoreCombo.getSelectedItem();
+        String selectedScore = (String) scoreCombo.getSelectedItem();
 
-        student = new Student(fullName, score);
+        if ("Не указана".equals(selectedScore)) {
+            // Создаем студента без оценки
+            student = new Student(fullName, -1); // -1 будет означать "оценка не указана"
+        } else {
+            try {
+                int score = Integer.parseInt(selectedScore);
+                student = new Student(fullName, score);
+            } catch (NumberFormatException e) {
+                student = new Student(fullName, -1); // По умолчанию без оценки
+            }
+        }
     }
 
     public boolean isApproved() {

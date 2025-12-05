@@ -28,19 +28,35 @@ public class ExamRecord implements Serializable {
     }
 
     public List<Student> getStudents() {
-        return new ArrayList<>(students); // Возвращаем копию для безопасности
+        return new ArrayList<>(students);
     }
 
     public int getTotalStudents() {
         return students.size();
     }
 
+    public int getStudentsWithGrade() {
+        return (int) students.stream().filter(Student::hasGrade).count();
+    }
+
     public int getPassedCount() {
-        return (int) students.stream().filter(Student::isPassed).count();
+        return (int) students.stream()
+                .filter(Student::hasGrade)
+                .filter(Student::isPassed)
+                .count();
     }
 
     public int getFailedCount() {
-        return getTotalStudents() - getPassedCount();
+        return (int) students.stream()
+                .filter(Student::hasGrade)
+                .filter(s -> !s.isPassed())
+                .count();
+    }
+
+    public int getStudentsWithoutGrade() {
+        return (int) students.stream()
+                .filter(s -> !s.hasGrade())
+                .count();
     }
 
     public String getSubject() {

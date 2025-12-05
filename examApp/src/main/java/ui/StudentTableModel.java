@@ -25,6 +25,13 @@ public class StudentTableModel extends AbstractTableModel {
         }
     }
 
+    public void updateStudent(int rowIndex, Student student) {
+        if (rowIndex >= 0 && rowIndex < students.size()) {
+            students.set(rowIndex, student);
+            fireTableRowsUpdated(rowIndex, rowIndex);
+        }
+    }
+
     public Student getStudent(int rowIndex) {
         if (rowIndex >= 0 && rowIndex < students.size()) {
             return students.get(rowIndex);
@@ -33,7 +40,7 @@ public class StudentTableModel extends AbstractTableModel {
     }
 
     public List<Student> getStudents() {
-        return new ArrayList<>(students); // Возвращаем копию для безопасности
+        return new ArrayList<>(students);
     }
 
     @Override
@@ -57,7 +64,7 @@ public class StudentTableModel extends AbstractTableModel {
         switch (columnIndex) {
             case 0: return rowIndex + 1;
             case 1: return student.getFullName();
-            case 2: return student.getScore();
+            case 2: return student.hasGrade() ? student.getScore() : "Нет оценки";
             case 3: return student.getResultText();
             default: return null;
         }
@@ -70,8 +77,11 @@ public class StudentTableModel extends AbstractTableModel {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        if (columnIndex == 0 || columnIndex == 2) {
+        if (columnIndex == 0) {
             return Integer.class;
+        } else if (columnIndex == 2) {
+            // Может быть Integer или String
+            return Object.class;
         }
         return String.class;
     }
