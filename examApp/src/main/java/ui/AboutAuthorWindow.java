@@ -65,15 +65,35 @@ public class AboutAuthorWindow extends JDialog {
      */
     private JPanel createPhotoPanel() {
         JPanel photoPanel = new JPanel(new BorderLayout());
-        JLabel photoLabel = new JLabel("ФОТО", SwingConstants.CENTER);
-        photoLabel.setPreferredSize(new Dimension(150, 200));
-        photoLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-        photoLabel.setBackground(new Color(240, 240, 240));
-        photoLabel.setOpaque(true);
-        photoLabel.setFont(new Font("Arial", Font.BOLD, 14));
 
-        photoPanel.add(photoLabel, BorderLayout.CENTER);
-        photoPanel.add(new JLabel("Фотография автора", SwingConstants.CENTER), BorderLayout.SOUTH);
+        try {
+            // Способ 1: Загрузка из файла (укажите правильный путь)
+            ImageIcon photoIcon = new ImageIcon("images/my_photo.jfif");
+
+            // Масштабируем изображение под размеры панели
+            Image scaledImage = photoIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+            JLabel photoLabel = new JLabel(scaledIcon, SwingConstants.CENTER);
+            photoLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+
+            photoPanel.add(photoLabel, BorderLayout.CENTER);
+            photoPanel.add(new JLabel("Фотография автора", SwingConstants.CENTER), BorderLayout.SOUTH);
+
+        } catch (Exception e) {
+            // Если фото не загрузилось, показываем заглушку
+            JLabel photoLabel = new JLabel("ФОТО", SwingConstants.CENTER);
+            photoLabel.setPreferredSize(new Dimension(150, 200));
+            photoLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+            photoLabel.setBackground(new Color(240, 240, 240));
+            photoLabel.setOpaque(true);
+            photoLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+            photoPanel.add(photoLabel, BorderLayout.CENTER);
+            photoPanel.add(new JLabel("Фотография автора", SwingConstants.CENTER), BorderLayout.SOUTH);
+
+            System.err.println("Ошибка загрузки фотографии: " + e.getMessage());
+        }
 
         return photoPanel;
     }
@@ -93,13 +113,13 @@ public class AboutAuthorWindow extends JDialog {
         gbc.gridx = 0; gbc.gridy = 0;
         infoPanel.add(new JLabel("ФИО студента:"), gbc);
         gbc.gridx = 1;
-        infoPanel.add(new JLabel("[Ваше ФИО]"), gbc);
+        infoPanel.add(new JLabel("Маленков Станислав Владимирович"), gbc);
 
         // Номер группы
         gbc.gridx = 0; gbc.gridy = 1;
         infoPanel.add(new JLabel("Номер группы:"), gbc);
         gbc.gridx = 1;
-        infoPanel.add(new JLabel("[Ваша группа]"), gbc);
+        infoPanel.add(new JLabel("10702423"), gbc);
 
         // Факультет
         gbc.gridx = 0; gbc.gridy = 2;
@@ -133,12 +153,11 @@ public class AboutAuthorWindow extends JDialog {
      */
     private JTextArea createAchievementsArea() {
         JTextArea achievementsArea = new JTextArea(6, 30);
-        achievementsArea.setText("Достижения и навыки:\n\n" +
+        achievementsArea.setText("Навыки:\n\n" +
                 "• Разработка программ на Java\n" +
                 "• Создание GUI приложений с использованием Swing\n" +
                 "• Работа с базами данных\n" +
-                "• Разработка алгоритмов обработки данных\n" +
-                "• Тестирование и отладка программного обеспечения");
+                "• Разработка алгоритмов обработки данных");
         achievementsArea.setEditable(false);
         achievementsArea.setFont(new Font("Arial", Font.PLAIN, 12));
         achievementsArea.setBorder(BorderFactory.createTitledBorder("Профессиональные навыки"));
@@ -152,8 +171,8 @@ public class AboutAuthorWindow extends JDialog {
     private JPanel createContactPanel() {
         JPanel contactPanel = new JPanel(new GridLayout(3, 1, 5, 5));
         contactPanel.setBorder(BorderFactory.createTitledBorder("Контактная информация"));
-        contactPanel.add(new JLabel("Email: student@edu.bntu.by"));
-        contactPanel.add(new JLabel("Телефон: +375 (29) XXX-XX-XX"));
+        contactPanel.add(new JLabel("Email: malenkovstas8@gmail.com"));
+        contactPanel.add(new JLabel("Телефон: +375 (33) 322-65-70"));
         contactPanel.add(new JLabel("Место учебы: БНТУ, г. Минск"));
 
         return contactPanel;

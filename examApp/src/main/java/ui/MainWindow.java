@@ -849,16 +849,4 @@ public class MainWindow {
     private void showInfoDialog(String message) {
         JOptionPane.showMessageDialog(frame, message, "Информация", JOptionPane.INFORMATION_MESSAGE);
     }
-
-    /**
-     * Точка входа в приложение.
-     * Запускает главное окно в потоке обработки событий Swing.
-     *
-     * @param args - аргументы командной строки
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new MainWindow();
-        });
-    }
 }

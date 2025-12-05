@@ -105,7 +105,7 @@ public class AboutProgramWindow extends JDialog {
         descriptionArea.setWrapStyleWord(true);
 
         JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
-        descriptionScroll.setPreferredSize(new Dimension(500, 300));
+        descriptionScroll.setPreferredSize(new Dimension(500, 350));
 
         return descriptionScroll;
     }
