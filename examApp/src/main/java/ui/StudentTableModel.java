@@ -7,63 +7,51 @@ import java.util.List;
 
 /**
  * Модель данных для таблицы студентов.
- * Предоставляет данные для отображения в JTable.
+ * Поддерживает inline-редактирование ячеек.
  *
- * @version 1.0
+ * @version 3.0
  * @author Маленков Станислав Владимирович
  */
 public class StudentTableModel extends AbstractTableModel {
-    private List<Student> students;                 // Список студентов
-    private final String[] columnNames = {"№", "ФИО студента", "Оценка", "Результат"}; // Заголовки столбцов
+    private List<Student> students;
+    private final String[] columnNames = {"№", "ФИО студента", "Оценка", "Результат"};
 
-    /**
-     * Создает пустую модель таблицы.
-     */
+    // Ссылка на главное окно для уведомления об изменениях
+    private MainWindow mainWindow;
+
     public StudentTableModel() {
         this.students = new ArrayList<>();
     }
 
     /**
-     * Добавляет студента в таблицу.
-     *
-     * @param student - добавляемый студент
+     * Устанавливает ссылку на главное окно.
      */
+    public void setMainWindow(MainWindow mainWindow) {
+        this.mainWindow = mainWindow;
+    }
+
     public void addStudent(Student student) {
         students.add(student);
         fireTableRowsInserted(students.size() - 1, students.size() - 1);
+        notifyDataModified();
     }
 
-    /**
-     * Удаляет студента по индексу строки.
-     *
-     * @param rowIndex - индекс строки
-     */
     public void removeStudent(int rowIndex) {
         if (rowIndex >= 0 && rowIndex < students.size()) {
             students.remove(rowIndex);
             fireTableRowsDeleted(rowIndex, rowIndex);
+            notifyDataModified();
         }
     }
 
-    /**
-     * Обновляет данные студента.
-     *
-     * @param rowIndex - индекс строки
-     * @param student  - новые данные студента
-     */
     public void updateStudent(int rowIndex, Student student) {
         if (rowIndex >= 0 && rowIndex < students.size()) {
             students.set(rowIndex, student);
             fireTableRowsUpdated(rowIndex, rowIndex);
+            notifyDataModified();
         }
     }
 
-    /**
-     * Возвращает студента по индексу строки.
-     *
-     * @param rowIndex - индекс строки
-     * @return Student - объект студента
-     */
     public Student getStudent(int rowIndex) {
         if (rowIndex >= 0 && rowIndex < students.size()) {
             return students.get(rowIndex);
@@ -71,96 +59,129 @@ public class StudentTableModel extends AbstractTableModel {
         return null;
     }
 
-    /**
-     * Возвращает копию списка студентов.
-     *
-     * @return List<Student> - список студентов
-     */
     public List<Student> getStudents() {
-        return new ArrayList<>(students); // Защитная копия
+        return new ArrayList<>(students);
     }
 
-    /* Методы интерфейса TableModel */
-
-    /**
-     * Возвращает количество строк в таблице.
-     */
     @Override
     public int getRowCount() {
         return students.size();
     }
 
-    /**
-     * Возвращает количество столбцов в таблице.
-     */
     @Override
     public int getColumnCount() {
         return columnNames.length;
     }
 
-    /**
-     * Возвращает название столбца.
-     *
-     * @param column - индекс столбца
-     * @return String - название столбца
-     */
     @Override
     public String getColumnName(int column) {
         return columnNames[column];
     }
 
-    /**
-     * Возвращает значение ячейки таблицы.
-     *
-     * @param rowIndex    - индекс строки
-     * @param columnIndex - индекс столбца
-     * @return Object - значение ячейки
-     */
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         Student student = students.get(rowIndex);
         switch (columnIndex) {
-            case 0: return rowIndex + 1; // № по порядку
+            case 0: return rowIndex + 1; // № (не редактируемый)
             case 1: return student.getFullName(); // ФИО
             case 2: return student.hasGrade() ? student.getScore() : "Нет оценки"; // Оценка
-            case 3: return student.getResultText(); // Результат
+            case 3: return student.getResultText(); // Результат (не редактируемый)
             default: return null;
         }
     }
 
-    /**
-     * Определяет, можно ли редактировать ячейку.
-     * В данной реализации все ячейки не редактируемые.
-     */
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return false; // Запрещаем редактирование
+        // Разрешаем редактирование только столбцов 1 (ФИО) и 2 (Оценка)
+        return columnIndex == 1 || columnIndex == 2;
+    }
+
+    @Override
+    public void setValueAt(Object value, int rowIndex, int columnIndex) {
+        Student student = students.get(rowIndex);
+
+        if (value == null) return;
+
+        switch (columnIndex) {
+            case 1: // Редактирование ФИО
+                String newName = value.toString().trim();
+                if (!newName.isEmpty() && !newName.equals(student.getFullName())) {
+                    student.setFullName(newName);
+                    fireTableCellUpdated(rowIndex, columnIndex);
+                    // Автоматически обновляем результат
+                    fireTableCellUpdated(rowIndex, 3);
+                    notifyDataModified();
+                }
+                break;
+
+            case 2: // Редактирование оценки
+                try {
+                    if (value instanceof Integer) {
+                        int score = (Integer) value;
+                        if (score >= 0 && score <= 10 && score != student.getScore()) {
+                            student.setScore(score);
+                            fireTableCellUpdated(rowIndex, columnIndex);
+                            fireTableCellUpdated(rowIndex, 3);
+                            notifyDataModified();
+                        }
+                    } else if (value instanceof String) {
+                        String strValue = ((String) value).trim();
+                        if (strValue.equalsIgnoreCase("нет оценки") || strValue.isEmpty()) {
+                            if (student.hasGrade()) {
+                                student.setScore(-1);
+                                fireTableCellUpdated(rowIndex, columnIndex);
+                                fireTableCellUpdated(rowIndex, 3);
+                                notifyDataModified();
+                            }
+                        } else {
+                            int score = Integer.parseInt(strValue);
+                            if (score >= 0 && score <= 10 && score != student.getScore()) {
+                                student.setScore(score);
+                                fireTableCellUpdated(rowIndex, columnIndex);
+                                fireTableCellUpdated(rowIndex, 3);
+                                notifyDataModified();
+                            }
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // Неверный формат числа - игнорируем
+                }
+                break;
+        }
     }
 
     /**
-     * Возвращает класс данных в столбце.
-     *
-     * @param columnIndex - индекс столбца
-     * @return Class - класс данных столбца
+     * Уведомляет главное окно об изменении данных.
      */
+    private void notifyDataModified() {
+        if (mainWindow != null) {
+            // Используем рефлексию для вызова protected метода
+            try {
+                java.lang.reflect.Method method = MainWindow.class.getDeclaredMethod("markDataModified");
+                method.setAccessible(true);
+                method.invoke(mainWindow);
+            } catch (Exception e) {
+                // Игнорируем, если не получилось вызвать
+            }
+        }
+    }
+
     @Override
     public Class<?> getColumnClass(int columnIndex) {
         if (columnIndex == 0) {
-            return Integer.class; // № - целое число
+            return Integer.class;
         } else if (columnIndex == 2) {
-            return Object.class; // Оценка - может быть Integer или String
+            return Object.class; // Может быть Integer или String
         }
-        return String.class; // Остальные столбцы - строки
+        return String.class;
     }
 
-    /**
-     * Очищает таблицу (удаляет всех студентов).
-     */
     public void clear() {
         int size = students.size();
         if (size > 0) {
             students.clear();
-            fireTableRowsDeleted(0, size - 1); // Уведомляем об удалении всех строк
+            fireTableRowsDeleted(0, size - 1);
+            notifyDataModified();
         }
     }
 }
