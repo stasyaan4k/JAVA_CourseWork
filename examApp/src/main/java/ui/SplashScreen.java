@@ -12,7 +12,9 @@ import java.awt.event.*;
  * @author Маленков Станислав Владимирович
  */
 public class SplashScreen extends JWindow {
-    private static final int DISPLAY_TIME = 60000; // Время показа: 60 секунд
+    private static final int DISPLAY_TIME = 10000; // Время показа: 60 секунд
+    private Timer autoCloseTimer;
+    private boolean mainApplicationStarted = false;
 
     /**
      * Создает окно-заставку.
@@ -214,34 +216,47 @@ public class SplashScreen extends JWindow {
      * Настраивает таймер для автоматического закрытия заставки.
      */
     private void setupAutoCloseTimer() {
-        Timer timer = new Timer(DISPLAY_TIME, e -> closeApplication());
-        timer.setRepeats(false);
-        timer.start();
+        autoCloseTimer = new Timer(DISPLAY_TIME, e -> {
+            // Только если главное окно НЕ было запущено
+            if (!mainApplicationStarted) {
+                System.exit(0); // Полное завершение программы
+            }
+        });
+        autoCloseTimer.setRepeats(false);
+        autoCloseTimer.start();
+    }
 
-        // Обработчик клика по окну
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                timer.stop();
-                startMainApplication();
+    private void startMainApplication() {
+        // Устанавливаем флаг, что главное окно запускается
+        mainApplicationStarted = true;
+
+        // Останавливаем таймер
+        if (autoCloseTimer != null && autoCloseTimer.isRunning()) {
+            autoCloseTimer.stop();
+        }
+
+        // Закрываем заставку
+        dispose();
+
+        // Запускаем главное окно
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new MainWindow();
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Ошибка запуска приложения: " + e.getMessage(),
+                        "Ошибка", JOptionPane.ERROR_MESSAGE);
+                System.exit(1);
             }
         });
     }
 
-    /**
-     * Запускает главное окно и закрывает заставку.
-     */
-    private void startMainApplication() {
-        dispose(); // Закрываем заставку
-        SwingUtilities.invokeLater(() -> new MainWindow()); // Запускаем главное окно
-    }
-
-    /**
-     * Закрывает приложение (вызывается по таймеру).
-     */
     private void closeApplication() {
-        dispose(); // Закрываем заставку
-        System.exit(0); // Завершаем программу
+        // Этот метод оставляем для таймера
+        if (!mainApplicationStarted) {
+            System.exit(0);
+        }
     }
 
     /**
