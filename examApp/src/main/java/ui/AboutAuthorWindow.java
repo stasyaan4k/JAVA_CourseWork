@@ -67,8 +67,8 @@ public class AboutAuthorWindow extends JDialog {
         JPanel photoPanel = new JPanel(new BorderLayout());
 
         try {
-            // Способ 1: Загрузка из файла (укажите правильный путь)
-            ImageIcon photoIcon = new ImageIcon("images/my_photo.jfif");
+            //Загрузка из файла
+            ImageIcon photoIcon = new ImageIcon(MainWindow.class.getResource("/my_photo.jfif"));
 
             // Масштабируем изображение под размеры панели
             Image scaledImage = photoIcon.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);

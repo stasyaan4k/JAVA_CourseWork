@@ -12,7 +12,7 @@ import java.awt.event.*;
  * @author Маленков Станислав Владимирович
  */
 public class SplashScreen extends JWindow {
-    private static final int DISPLAY_TIME = 10000; // Время показа: 60 секунд
+    private static final int DISPLAY_TIME = 60000; // Время показа: 60 секунд
 
     /**
      * Создает окно-заставку.
@@ -214,7 +214,7 @@ public class SplashScreen extends JWindow {
      * Настраивает таймер для автоматического закрытия заставки.
      */
     private void setupAutoCloseTimer() {
-        Timer timer = new Timer(DISPLAY_TIME, e -> startMainApplication());
+        Timer timer = new Timer(DISPLAY_TIME, e -> closeApplication());
         timer.setRepeats(false);
         timer.start();
 
@@ -229,11 +229,19 @@ public class SplashScreen extends JWindow {
     }
 
     /**
-     * Закрывает заставку и завершает работу программы.
+     * Запускает главное окно и закрывает заставку.
      */
     private void startMainApplication() {
         dispose(); // Закрываем заставку
-        System.exit(0); // Завершаем программу с кодом 0 (успешное завершение)
+        SwingUtilities.invokeLater(() -> new MainWindow()); // Запускаем главное окно
+    }
+
+    /**
+     * Закрывает приложение (вызывается по таймеру).
+     */
+    private void closeApplication() {
+        dispose(); // Закрываем заставку
+        System.exit(0); // Завершаем программу
     }
 
     /**
